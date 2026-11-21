@@ -16,8 +16,26 @@ const repo = path.resolve(
   "..",
 );
 const EMSDK_TAG = process.env.EMSDK_TAG ?? "5.0.5"; // pinned; override with EMSDK_TAG
+// Auto-detect native EMSDK if installed in common locations (e.g. C:\emsdk)
+const candidateEmsdks = [
+  process.env.EMSDK,
+  path.join(os.homedir(), "emsdk"),
+  "C:\\emsdk",
+].filter(Boolean);
+
+let hasNativeEmsdk = false;
+for (const emsdkPath of candidateEmsdks) {
+  const emscriptenPath = path.join(emsdkPath, "upstream", "emscripten");
+  if (existsSync(emscriptenPath)) {
+    process.env.PATH = `${emscriptenPath}${path.delimiter}${emsdkPath}${path.delimiter}${process.env.PATH}`;
+    if (!process.env.EMSDK) process.env.EMSDK = emsdkPath;
+    hasNativeEmsdk = true;
+    break;
+  }
+}
+
 const native =
-  process.argv.includes("--native") || process.env.NQ_NATIVE === "1";
+  process.argv.includes("--native") || process.env.NQ_NATIVE === "1" || hasNativeEmsdk;
 
 const cfg = JSON.parse(
   readFileSync(

@@ -8,6 +8,7 @@
   },
   "scripts": {
     "build:solvers": "node driver/scripts/build-solvers.mjs",
+    "build:solvers:native": "node driver/scripts/build-solvers.mjs --native",
     "dev": "vite --config driver/vite.config.ts",
     "build": "tsc --noEmit && vite build --config driver/vite.config.ts",
     "preview": "vite preview --config driver/vite.config.ts",
