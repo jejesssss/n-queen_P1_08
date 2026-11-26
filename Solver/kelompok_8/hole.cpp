@@ -1,27 +1,29 @@
 #include "nqueens.h"
+#include <utility>
+#include <vector>
+#include <string>
 
 struct HoleSearcher {
     int n;
-    unsigned full;                        
-    std::vector<unsigned> holeMask;        
+    unsigned full;                       
+    std::vector<unsigned> holeMask;     
     std::vector<int> cols;                 
-    std::vector<std::vector<int>> found;  
+    std::vector<std::vector<int>> found;    
 
     void place(int r, unsigned usedCols, unsigned diagL, unsigned diagR) {
         if (r == n) {
             found.push_back(cols);
             return;
         }
-        // kolom aman = tidak terpakai, tidak kena diagonal, dan bukan bolong
         unsigned avail = full & ~(usedCols | diagL | diagR) & ~holeMask[r];
         while (avail) {
-            unsigned bit = avail & (~avail + 1);   
-            avail ^= bit;                          
-            cols[r] = __builtin_ctz(bit);          
+            unsigned bit = avail & (~avail + 1); 
+            avail ^= bit;                        
+            cols[r] = __builtin_ctz(bit);         
             place(r + 1,
                   usedCols | bit,
                   ((diagL | bit) << 1) & full,    
-                  (diagR | bit) >> 1);            
+                  (diagR | bit) >> 1);           
         }
     }
 };
@@ -37,5 +39,5 @@ std::vector<std::vector<int>> solveHoles(int n, const std::vector<std::string>& 
             if (grid[r][c] == 'H') s.holeMask[r] |= (1u << c);
 
     s.place(0, 0, 0, 0);
-    return s.found;
+    return std::move(s.found);  
 }
