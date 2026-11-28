@@ -1,43 +1,53 @@
 #include "nqueens.h"
-#include <utility>
-#include <vector>
 #include <string>
-
-struct HoleSearcher {
-    int n;
-    unsigned full;                       
-    std::vector<unsigned> holeMask;     
-    std::vector<int> cols;                 
-    std::vector<std::vector<int>> found;    
-
-    void place(int r, unsigned usedCols, unsigned diagL, unsigned diagR) {
-        if (r == n) {
-            found.push_back(cols);
-            return;
-        }
-        unsigned avail = full & ~(usedCols | diagL | diagR) & ~holeMask[r];
-        while (avail) {
-            unsigned bit = avail & (~avail + 1); 
-            avail ^= bit;                        
-            cols[r] = __builtin_ctz(bit);         
-            place(r + 1,
-                  usedCols | bit,
-                  ((diagL | bit) << 1) & full,    
-                  (diagR | bit) >> 1);           
-        }
-    }
-};
+#include <vector>
 
 std::vector<std::vector<int>> solveHoles(int n, const std::vector<std::string>& grid) {
-    HoleSearcher s;
-    s.n = n;
-    s.full = (1u << n) - 1;
-    s.cols.assign(n, -1);
-    s.holeMask.assign(n, 0);
-    for (int r = 0; r < n; r++)
-        for (int c = 0; c < n; c++)
-            if (grid[r][c] == 'H') s.holeMask[r] |= (1u << c);
+    const int MAKS_N = 12;                  
+    std::vector<std::vector<int>> hasil;
 
-    s.place(0, 0, 0, 0);
-    return std::move(s.found);  
+    const unsigned semua = (1u << n) - 1; 
+
+    unsigned bolong[MAKS_N];
+    for (int r = 0; r < n; r++) {
+        bolong[r] = 0;
+        for (int c = 0; c < n; c++)
+            if (grid[r][c] == 'H') bolong[r] |= (1u << c);
+    }
+
+    unsigned kolomPakai[MAKS_N + 1]; 
+    unsigned diagKiri[MAKS_N + 1];   
+    unsigned diagKanan[MAKS_N + 1];
+    unsigned sisa[MAKS_N + 1];      
+    int kolom[MAKS_N];     
+
+    int baris = 0;
+    kolomPakai[0] = 0;
+    diagKiri[0] = 0;
+    diagKanan[0] = 0;
+    sisa[0] = semua & ~bolong[0];
+
+    while (baris >= 0) {
+        if (sisa[baris] == 0) {
+            baris--;
+            continue;
+        }
+
+        unsigned bit = sisa[baris] & (~sisa[baris] + 1);
+        sisa[baris] ^= bit;
+        kolom[baris] = __builtin_ctz(bit);  
+
+        if (baris == n - 1) {
+            hasil.push_back(std::vector<int>(kolom, kolom + n));
+            continue;
+        }
+
+        kolomPakai[baris + 1] = kolomPakai[baris] | bit;
+        diagKiri[baris + 1] = ((diagKiri[baris] | bit) << 1) & semua;  
+        diagKanan[baris + 1] = (diagKanan[baris] | bit) >> 1;           
+        baris++;
+        sisa[baris] = semua & ~(kolomPakai[baris] | diagKiri[baris] | diagKanan[baris] | bolong[baris]);
+    }
+
+    return hasil; 
 }
